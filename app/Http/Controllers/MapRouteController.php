@@ -24,7 +24,7 @@ class MapRouteController extends Controller
             })
             ->values();
 
-        return view('test', [
+        return view('map', [
             'mapRoutes' => $mapRoutes,
         ]);
     }

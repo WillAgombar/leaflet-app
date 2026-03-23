@@ -6,22 +6,20 @@
 
 @push('head')
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+    <link rel="preconnect" href="https://a.tile.openstreetmap.org" crossorigin>
+    <link rel="preconnect" href="https://b.tile.openstreetmap.org" crossorigin>
+    <link rel="preconnect" href="https://c.tile.openstreetmap.org" crossorigin>
+    <link rel="preconnect" href="https://a.tile.openstreetmap.fr" crossorigin>
+    <link rel="preconnect" href="https://b.tile.openstreetmap.fr" crossorigin>
+    <link rel="preconnect" href="https://c.tile.openstreetmap.fr" crossorigin>
 
     <style>
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-
         .tracker-shadow {
             box-shadow: 0 16px 32px 0 rgba(18, 18, 18, 0.06);
         }
 
         .map-gradient-overlay {
             background: linear-gradient(to bottom, rgba(255, 255, 255, 0.88) 0%, rgba(255, 255, 255, 0) 16%, rgba(255, 255, 255, 0) 84%, rgba(255, 255, 255, 0.96) 100%);
-        }
-
-        .pb-safe {
-            padding-bottom: max(1rem, env(safe-area-inset-bottom));
         }
 
         .leaflet-container {
@@ -105,11 +103,11 @@
             class="fixed top-0 z-50 flex w-full items-center justify-between border-b border-[#e8f5e9] bg-white/90 px-6 py-4 backdrop-blur-md tracker-shadow"
         >
             <div class="flex items-center gap-3">
-                <span class="material-symbols-outlined text-2xl text-[#1b5e20]">map</span>
+                <x-icon name="map" class="h-6 w-6 text-[#1b5e20]" />
                 <h1 class="font-['Plus_Jakarta_Sans'] text-xl font-black uppercase tracking-tight text-[#1b5e20]">Leaflet Tracker</h1>
             </div>
             <button type="button" class="text-[#12121299] transition-colors duration-200 hover:text-[#1b5e20] active:scale-95" aria-label="Account">
-                <span class="material-symbols-outlined">account_circle</span>
+                <x-icon name="account-circle" class="h-6 w-6" />
             </button>
         </header>
 
@@ -130,7 +128,7 @@
                             placeholder="e.g. Michael Scott"
                             class="h-14 w-full rounded-xl border-2 border-transparent bg-[#f1f8f1] px-5 font-bold text-[#121212] placeholder:text-[#72777599] transition-all focus:border-[#1b5e2033] focus:ring-0"
                         >
-                        <span class="material-symbols-outlined pointer-events-none absolute right-4 top-4 text-[#1b5e2066]">edit</span>
+                        <x-icon name="edit" class="pointer-events-none absolute right-4 top-4 h-6 w-6 text-[#1b5e2066]" />
                     </div>
                 </div>
 
@@ -145,7 +143,7 @@
                             type="button"
                             class="flex h-16 flex-1 items-center justify-center gap-2 rounded-2xl border-2 border-[#e8f5e9] bg-white text-sm font-black uppercase text-[#121212] shadow-sm transition-all hover:bg-[#f1f8f1] active:scale-95"
                         >
-                            <span class="material-symbols-outlined">undo</span>
+                            <x-icon name="undo" class="h-5 w-5" />
                             Undo Last Move
                         </button>
 
@@ -155,7 +153,7 @@
                             class="flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-[#e8f5e9] bg-white font-bold text-[#ba1a1a] shadow-sm transition-all hover:bg-red-50 active:scale-95"
                             aria-label="Reset route"
                         >
-                            <span class="material-symbols-outlined">delete</span>
+                            <x-icon name="delete" class="h-5 w-5" />
                         </button>
                     </div>
 
@@ -164,7 +162,7 @@
                         type="button"
                         class="flex h-20 w-full items-center justify-center gap-3 rounded-2xl border-b-4 border-[#2e7d32] bg-[#1b5e20] font-['Plus_Jakarta_Sans'] text-xl font-black uppercase text-white shadow-2xl shadow-[#1b5e204d] transition-all active:scale-[0.98]"
                     >
-                        <span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1">check_circle</span>
+                        <x-icon name="check-circle" class="h-7 w-7" />
                         <span id="save-route-label">Finish and Save Route</span>
                     </button>
                 </div>
@@ -177,7 +175,7 @@
                     class="flex h-14 w-14 items-center justify-center rounded-full border border-[#e8f5e9] bg-white text-[#1b5e20] shadow-xl transition-transform active:scale-90"
                     aria-label="Find my location"
                 >
-                    <span class="material-symbols-outlined">my_location</span>
+                    <x-icon name="my-location" class="h-6 w-6" />
                 </button>
                 <button
                     id="layers-button"
@@ -185,15 +183,15 @@
                     class="flex h-14 w-14 items-center justify-center rounded-full border border-[#e8f5e9] bg-white text-[#1b5e20] shadow-xl transition-transform active:scale-90"
                     aria-label="Switch map layer"
                 >
-                    <span class="material-symbols-outlined">layers</span>
+                    <x-icon name="layers" class="h-6 w-6" />
                 </button>
             </div>
         </section>
 
         <x-mobile-bottom-nav
             active="mark-road"
-            mark-road-href="#"
-            log-href="#"
+            mark-road-href="{{ route('map-routes.show') }}"
+            log-href="{{ route('campaigns.index') }}"
             setup-href="#"
         />
     </main>
