@@ -82,9 +82,20 @@ if (trackerRoot) {
             return;
         }
 
+        const displayName = name.trim() || 'Volunteer';
+
         const labelIcon = L.divIcon({
             className: 'route-label',
-            html: `<div class="rounded-full border-2 border-white bg-[#1b5e20] px-4 py-2 text-[11px] font-black uppercase tracking-wider text-white shadow-lg">COMPLETED • ${escapeHtml(name)}</div>`,
+            iconSize: null,
+            html: `
+                <div class="route-label-chip" title="${escapeHtml(displayName)}">
+                    <span class="route-label-chip__dot"></span>
+                    <span class="route-label-chip__meta">
+                        <span class="route-label-chip__state">Completed</span>
+                        <span class="route-label-chip__name">${escapeHtml(displayName)}</span>
+                    </span>
+                </div>
+            `,
         });
 
         L.marker(bounds.getCenter(), { icon: labelIcon, keyboard: false }).addTo(routeLabelsLayer);

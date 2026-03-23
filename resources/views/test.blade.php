@@ -36,6 +36,55 @@
         .route-label {
             background: transparent;
             border: 0;
+            pointer-events: none;
+        }
+
+        .route-label-chip {
+            display: inline-flex;
+            max-width: min(72vw, 15rem);
+            align-items: center;
+            gap: 0.5rem;
+            border: 2px solid #fff;
+            border-radius: 9999px;
+            background: rgba(27, 94, 32, 0.95);
+            padding: 0.42rem 0.62rem;
+            box-shadow: 0 10px 22px rgba(18, 18, 18, 0.2);
+            color: #fff;
+        }
+
+        .route-label-chip__dot {
+            height: 0.62rem;
+            width: 0.62rem;
+            flex-shrink: 0;
+            border-radius: 9999px;
+            background: #a5d6a7;
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.28);
+        }
+
+        .route-label-chip__meta {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            line-height: 1;
+        }
+
+        .route-label-chip__state {
+            margin-bottom: 0.22rem;
+            font-size: 0.58rem;
+            font-weight: 800;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            opacity: 0.9;
+        }
+
+        .route-label-chip__name {
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 0.76rem;
+            font-weight: 800;
+            letter-spacing: 0.02em;
         }
 
         #tracker-map {
@@ -141,20 +190,12 @@
             </div>
         </section>
 
-        <nav class="fixed bottom-0 z-50 flex h-24 w-full items-center justify-around rounded-t-[2rem] border-t border-[#e8f5e9] bg-white px-4 pb-safe shadow-[0_-8px_32px_rgba(0,0,0,0.08)]">
-            <a href="#" class="-translate-y-2 flex scale-105 flex-col items-center justify-center rounded-2xl bg-[#1b5e20] px-8 py-3 text-white shadow-lg shadow-[#1b5e2033] transition-all">
-                <span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1">polyline</span>
-                <span class="text-[10px] font-black uppercase tracking-widest">Mark Road</span>
-            </a>
-            <a href="#" class="flex flex-col items-center justify-center px-4 py-2 text-[#12121299] transition-all hover:text-[#1b5e20] active:scale-90">
-                <span class="material-symbols-outlined mb-1">history</span>
-                <span class="text-[10px] font-bold uppercase tracking-widest">Log</span>
-            </a>
-            <a href="#" class="flex flex-col items-center justify-center px-4 py-2 text-[#12121299] transition-all hover:text-[#1b5e20] active:scale-90">
-                <span class="material-symbols-outlined mb-1">settings</span>
-                <span class="text-[10px] font-bold uppercase tracking-widest">Setup</span>
-            </a>
-        </nav>
+        <x-mobile-bottom-nav
+            active="mark-road"
+            mark-road-href="#"
+            log-href="#"
+            setup-href="#"
+        />
     </main>
 @endsection
 
