@@ -38,7 +38,7 @@
                 <p class="mt-2 text-sm leading-relaxed text-[#444746]">Set campaign details so volunteers can select and start marking routes.</p>
             </div>
 
-            <form class="rounded-2xl border border-[#dcedc8] bg-white p-5 shadow-[0_10px_24px_rgba(27,94,32,0.08)]" action="#" method="POST">
+            <form class="rounded-2xl border border-[#dcedc8] bg-white p-5 shadow-[0_10px_24px_rgba(27,94,32,0.08)]" action="{{ route('campaigns.store') }}" method="POST">
                 @csrf
 
                 <div class="space-y-4">
@@ -49,8 +49,12 @@
                             name="name"
                             type="text"
                             placeholder="e.g. Winchester Spring Cleanup"
+                            value="{{ old('name') }}"
                             class="h-12 w-full rounded-xl border border-[#dcedc8] bg-[#f8fdf8] px-4 font-semibold text-[#121212] placeholder:text-[#72777599] focus:border-[#1b5e2033] focus:outline-none"
                         >
+                        @error('name')
+                            <p class="mt-2 text-xs font-semibold text-[#ba1a1a]">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div>
@@ -61,7 +65,10 @@
                             rows="4"
                             placeholder="What is this campaign for?"
                             class="w-full rounded-xl border border-[#dcedc8] bg-[#f8fdf8] px-4 py-3 font-semibold text-[#121212] placeholder:text-[#72777599] focus:border-[#1b5e2033] focus:outline-none"
-                        ></textarea>
+                        >{{ old('description') }}</textarea>
+                        @error('description')
+                            <p class="mt-2 text-xs font-semibold text-[#ba1a1a]">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -71,8 +78,12 @@
                                 id="campaign-start"
                                 name="start_date"
                                 type="date"
+                                value="{{ old('start_date') }}"
                                 class="h-12 w-full rounded-xl border border-[#dcedc8] bg-[#f8fdf8] px-4 font-semibold text-[#121212] focus:border-[#1b5e2033] focus:outline-none"
                             >
+                            @error('start_date')
+                                <p class="mt-2 text-xs font-semibold text-[#ba1a1a]">{{ $message }}</p>
+                            @enderror
                         </div>
 
                         <div>
@@ -81,15 +92,19 @@
                                 id="campaign-end"
                                 name="end_date"
                                 type="date"
+                                value="{{ old('end_date') }}"
                                 class="h-12 w-full rounded-xl border border-[#dcedc8] bg-[#f8fdf8] px-4 font-semibold text-[#121212] focus:border-[#1b5e2033] focus:outline-none"
                             >
+                            @error('end_date')
+                                <p class="mt-2 text-xs font-semibold text-[#ba1a1a]">{{ $message }}</p>
+                            @enderror
                         </div>
                     </div>
                 </div>
 
                 <div class="mt-6 flex items-center gap-3">
                     <button
-                        type="button"
+                        type="submit"
                         class="inline-flex h-11 items-center justify-center rounded-xl border-b-2 border-[#2e7d32] bg-[#1b5e20] px-5 text-sm font-black uppercase tracking-wide text-white shadow-lg shadow-[#1b5e2033] transition-all active:scale-95"
                     >
                         Save Campaign
