@@ -61,15 +61,15 @@
 
                         <div class="mt-4 flex flex-wrap gap-2">
                             <span class="rounded-full border border-[#dcedc8] bg-[#f8fdf8] px-3 py-1 text-xs font-bold text-[#2e7d32]">
-                                {{ $campaign['route_count'] ?? 0 }} routes
+                                {{ $campaign->map_routes_count }} routes
                             </span>
                             <span class="rounded-full border border-[#dcedc8] bg-[#f8fdf8] px-3 py-1 text-xs font-bold text-[#2e7d32]">
-                                {{ $campaign['volunteers'] ?? 0 }} volunteers
+                                {{ $campaign->volunteers_count }} volunteers
                             </span>
                         </div>
 
                         <a
-                            href="{{ $campaign['url'] ?? '#' }}"
+                            href="{{ route('campaigns.map.show', $campaign) }}"
                             class="mt-5 inline-flex h-11 items-center justify-center rounded-xl border-b-2 border-[#2e7d32] bg-[#1b5e20] px-5 text-sm font-black uppercase tracking-wide text-white shadow-lg shadow-[#1b5e2033] transition-all active:scale-95"
                         >
                             Select Campaign

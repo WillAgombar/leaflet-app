@@ -96,7 +96,7 @@
     <main
         data-leaflet-tracker
         data-routes='@json($mapRoutes)'
-        data-save-url="{{ route('map-routes.store') }}"
+        data-save-url="{{ $saveUrl ?? route('map-routes.store') }}"
         class="relative h-dvh min-h-[44rem] w-full overflow-hidden bg-white"
     >
         <header
@@ -116,6 +116,12 @@
             <div class="pointer-events-none absolute inset-0 z-10 map-gradient-overlay"></div>
 
             <div class="relative z-30 mx-auto flex max-w-lg flex-col gap-4 px-6 pt-4 md:ml-6 md:mr-0">
+                @if (!empty($campaign))
+                    <div class="rounded-xl border border-[#dcedc8] bg-white/95 px-4 py-3 text-sm font-semibold text-[#1b5e20] shadow-sm">
+                        Campaign: <span class="font-black">{{ $campaign->name }}</span>
+                    </div>
+                @endif
+
                 <div class="rounded-2xl border border-[#e8f5e9] bg-white/95 p-6 shadow-xl backdrop-blur-xl tracker-shadow">
                     <label for="name-input" class="mb-3 ml-1 block text-[11px] font-black uppercase tracking-[0.2em] text-[#1b5e20]">
                         Enter your name

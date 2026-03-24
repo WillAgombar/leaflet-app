@@ -10,6 +10,8 @@ Route::get('/', function () {
 
 Route::get('/map', [MapRouteController::class, 'show'])->name('map-routes.show');
 Route::post('/map-routes', [MapRouteController::class, 'store'])->name('map-routes.store');
+Route::get('/campaigns/{campaign}/map', [MapRouteController::class, 'showForCampaign'])->name('campaigns.map.show');
+Route::post('/campaigns/{campaign}/map-routes', [MapRouteController::class, 'storeForCampaign'])->name('campaigns.map-routes.store');
 
 Route::get('/campaigns', [CampaignController::class, 'index'])->name('campaigns.index');
 Route::get('/campaigns/create', [CampaignController::class, 'create'])->name('campaigns.create');
