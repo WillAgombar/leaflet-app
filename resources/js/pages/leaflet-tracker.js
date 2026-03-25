@@ -104,14 +104,38 @@ if (trackerRoot) {
         L.marker(bounds.getCenter(), { icon: labelIcon, keyboard: false }).addTo(routeLabelsLayer);
     };
 
-    const addCompletedRoute = (name, routeData) => {
+    const colorFromSeed = (seed) => {
+        const seedString = String(seed ?? '');
+        let hash = 0;
+
+        for (let index = 0; index < seedString.length; index += 1) {
+            hash = ((hash << 5) - hash) + seedString.charCodeAt(index);
+            hash |= 0;
+        }
+
+        const palette = [
+            '#d32f2f',
+            '#fbc02d',
+            '#388e3c',
+            '#1976d2',
+            '#7b1fa2',
+            '#f57c00',
+            '#00796b',
+        ];
+
+        return palette[Math.abs(hash) % palette.length];
+    };
+
+    const addCompletedRoute = (name, routeData, seed) => {
         if (!routeData || routeData.type !== 'FeatureCollection') {
             return;
         }
 
+        const routeColor = colorFromSeed(seed ?? name);
+
         const routeLayer = L.geoJSON(routeData, {
             style: {
-                color: '#2e7d32',
+                color: routeColor,
                 weight: 8,
                 lineCap: 'round',
                 lineJoin: 'round',
@@ -300,7 +324,7 @@ if (trackerRoot) {
             return;
         }
 
-        addCompletedRoute(route.name, route.route);
+        addCompletedRoute(route.name, route.route, route.id);
     });
 
     fitMapToSavedRoutes();
@@ -437,7 +461,7 @@ if (trackerRoot) {
             }
 
             if (payload.route) {
-                addCompletedRoute(payload.route.name, payload.route.route);
+                addCompletedRoute(payload.route.name, payload.route.route, payload.route.id);
             }
 
             resetDraftRoute();
