@@ -15,8 +15,8 @@ RUN npm run build
 FROM php:8.5-cli-alpine AS app
 WORKDIR /var/www/html
 
-RUN apk add --no-cache icu-dev oniguruma-dev libzip-dev zlib-dev \
-    && docker-php-ext-install bcmath intl pdo_mysql zip
+RUN apk add --no-cache icu-dev oniguruma-dev libzip-dev zlib-dev postgresql-dev \
+    && docker-php-ext-install bcmath intl pdo_mysql pdo_pgsql pgsql zip
 
 COPY --from=composer_deps /app/vendor ./vendor
 COPY . .
@@ -28,4 +28,4 @@ RUN php artisan package:discover --ansi \
 
 EXPOSE 10000
 
-CMD ["sh", "-c", "php artisan serve --host=0.0.0.0 --port=${PORT:-10000}"]
+CMD ["sh", "-c", "until php artisan migrate --force; do echo 'Waiting for database...'; sleep 3; done; php artisan serve --host=0.0.0.0 --port=${PORT:-10000}"]
