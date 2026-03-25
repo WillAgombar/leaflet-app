@@ -29,4 +29,4 @@ RUN rm -f public/hot \
 
 EXPOSE 10000
 
-CMD ["sh", "-c", "until php artisan migrate --force; do echo 'Waiting for database...'; sleep 3; done; php artisan serve --host=0.0.0.0 --port=${PORT:-10000}"]
+CMD ["sh", "-c", "php artisan optimize:clear; until php artisan migrate --force; do echo 'Waiting for database...'; sleep 3; done; php artisan serve --host=0.0.0.0 --port=${PORT:-10000}"]
