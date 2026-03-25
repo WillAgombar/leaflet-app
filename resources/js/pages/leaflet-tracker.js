@@ -42,6 +42,9 @@ if (trackerRoot) {
     let usingDetailedLayer = false;
     let userLocationMarker = null;
     let draftPoints = [];
+    let snappedSegments = [];
+    let routingQueue = Promise.resolve();
+    let draftVersion = 0;
 
     const escapeHtml = (value) => {
         const replacements = {
@@ -146,25 +149,74 @@ if (trackerRoot) {
         }
     };
 
+    const osrmEndpoint = 'https://router.project-osrm.org/route/v1/driving';
+
+    const startNewDraftVersion = () => {
+        draftVersion += 1;
+        routingQueue = Promise.resolve();
+    };
+
+    const buildSnappedPath = () => {
+        if (snappedSegments.length === 0) {
+            return [];
+        }
+
+        const path = [];
+        let processedSegments = 0;
+
+        for (const segment of snappedSegments) {
+            if (!Array.isArray(segment) || segment.length === 0) {
+                break;
+            }
+
+            if (processedSegments === 0) {
+                path.push(...segment);
+            } else {
+                const lastPoint = path[path.length - 1];
+                const firstPoint = segment[0];
+
+                if (lastPoint && firstPoint && lastPoint.lat === firstPoint.lat && lastPoint.lng === firstPoint.lng) {
+                    path.push(...segment.slice(1));
+                } else {
+                    path.push(...segment);
+                }
+            }
+
+            processedSegments += 1;
+        }
+
+        if (processedSegments === 0) {
+            return [...draftPoints];
+        }
+
+        if (processedSegments < snappedSegments.length && draftPoints.length > processedSegments + 1) {
+            path.push(...draftPoints.slice(processedSegments + 1));
+        }
+
+        return path;
+    };
+
     const renderDraftRoute = () => {
         inProgressRouteLayer.clearLayers();
         inProgressVertexLayer.clearLayers();
 
-        draftPoints.forEach((point) => {
-            L.circleMarker(point, {
+        if (draftPoints.length === 1) {
+            L.circleMarker(draftPoints[0], {
                 radius: 4,
                 color: '#121212',
                 fillColor: '#121212',
                 fillOpacity: 1,
                 weight: 0,
             }).addTo(inProgressVertexLayer);
-        });
+        }
 
-        if (draftPoints.length < 2) {
+        const routeLatLngs = buildSnappedPath();
+
+        if (routeLatLngs.length < 2) {
             return;
         }
 
-        L.polyline(draftPoints, {
+        L.polyline(routeLatLngs, {
             color: '#121212',
             weight: 6,
             dashArray: '10 10',
@@ -176,10 +228,58 @@ if (trackerRoot) {
 
     const resetDraftRoute = () => {
         draftPoints = [];
+        snappedSegments = [];
+        startNewDraftVersion();
         renderDraftRoute();
     };
 
+    const fetchSnappedSegment = async (start, end) => {
+        const coordinates = `${start.lng},${start.lat};${end.lng},${end.lat}`;
+        const url = `${osrmEndpoint}/${coordinates}?overview=full&geometries=geojson`;
+
+        try {
+            const response = await fetch(url, {
+                headers: {
+                    Accept: 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Unable to snap route segment.');
+            }
+
+            const payload = await response.json();
+            const geometry = payload?.routes?.[0]?.geometry?.coordinates;
+
+            if (!Array.isArray(geometry) || geometry.length === 0) {
+                throw new Error('No route geometry returned.');
+            }
+
+            return geometry.map(([lng, lat]) => L.latLng(lat, lng));
+        } catch {
+            return [start, end];
+        }
+    };
+
+    const queueSnappedSegment = (start, end, segmentIndex) => {
+        const version = draftVersion;
+
+        routingQueue = routingQueue.then(async () => {
+            const segment = await fetchSnappedSegment(start, end);
+
+            if (version !== draftVersion) {
+                return;
+            }
+
+            snappedSegments[segmentIndex] = segment;
+            renderDraftRoute();
+        });
+    };
+
     const buildRoutePayload = () => {
+        const snappedPath = buildSnappedPath();
+        const pathToSave = snappedPath.length > 0 ? snappedPath : draftPoints;
+
         return {
             type: 'FeatureCollection',
             features: [
@@ -188,7 +288,7 @@ if (trackerRoot) {
                     properties: {},
                     geometry: {
                         type: 'LineString',
-                        coordinates: draftPoints.map((point) => [point.lng, point.lat]),
+                        coordinates: pathToSave.map((point) => [point.lng, point.lat]),
                     },
                 },
             ],
@@ -206,8 +306,17 @@ if (trackerRoot) {
     fitMapToSavedRoutes();
 
     map.on('click', (event) => {
+        const previousPoint = draftPoints[draftPoints.length - 1] ?? null;
+
         draftPoints.push(event.latlng);
         renderDraftRoute();
+
+        if (previousPoint) {
+            const segmentIndex = draftPoints.length - 2;
+
+            snappedSegments[segmentIndex] = null;
+            queueSnappedSegment(previousPoint, event.latlng, segmentIndex);
+        }
     });
 
     undoButton.addEventListener('click', () => {
@@ -218,6 +327,8 @@ if (trackerRoot) {
         }
 
         draftPoints.pop();
+        snappedSegments.pop();
+        startNewDraftVersion();
         renderDraftRoute();
         setStatus('Last route segment removed.');
     });
@@ -299,6 +410,8 @@ if (trackerRoot) {
         setSavingState(true);
 
         try {
+            await routingQueue;
+
             const response = await fetch(trackerRoot.dataset.saveUrl, {
                 method: 'POST',
                 headers: {
