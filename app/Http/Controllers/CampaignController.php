@@ -50,4 +50,11 @@ class CampaignController extends Controller
 
         return redirect()->route('campaigns.index')->with('success', 'Campaign created successfully!');
     }
+
+     public function destroy(Campaigns $campaign)
+    {
+        $campaign->delete();
+
+        return redirect()->route('campaigns.index')->with('success', 'Campaign deleted successfully.');
+    }
 }

@@ -14,3 +14,4 @@ Route::post('/campaigns/{campaign}/map-routes', [MapRouteController::class, 'sto
 Route::get('/campaigns', [CampaignController::class, 'index'])->name('campaigns.index');
 Route::get('/campaigns/create', [CampaignController::class, 'create'])->name('campaigns.create');
 Route::post('/campaigns', [CampaignController::class, 'store'])->name('campaigns.store');
+Route::delete('/campaigns/{campaign}', [CampaignController::class, 'destroy'])->name('campaigns.destroy');

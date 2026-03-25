@@ -68,12 +68,25 @@
                             </span>
                         </div>
 
-                        <a
-                            href="{{ route('campaigns.map.show', $campaign) }}"
-                            class="mt-5 inline-flex h-11 items-center justify-center rounded-xl border-b-2 border-[#2e7d32] bg-[#1b5e20] px-5 text-sm font-black uppercase tracking-wide text-white shadow-lg shadow-[#1b5e2033] transition-all active:scale-95"
-                        >
-                            Select Campaign
-                        </a>
+                        <div class="mt-5 flex flex-wrap gap-3">
+                            <a
+                                href="{{ route('campaigns.map.show', $campaign) }}"
+                                class="inline-flex h-11 items-center justify-center rounded-xl border-b-2 border-[#2e7d32] bg-[#1b5e20] px-5 text-sm font-black uppercase tracking-wide text-white shadow-lg shadow-[#1b5e2033] transition-all active:scale-95"
+                            >
+                                Select Campaign
+                            </a>
+                            <form method="POST" action="{{ route('campaigns.destroy', $campaign) }}">
+                                @csrf
+                                @method('DELETE')
+                                <button
+                                    type="submit"
+                                    class="inline-flex h-11 items-center justify-center rounded-xl border-b-2 border-[#b71c1c] bg-[#d32f2f] px-5 text-sm font-black uppercase tracking-wide text-white shadow-lg shadow-[#d32f2f33] transition-all active:scale-95"
+                                    onclick="return confirm('Are you sure you want to delete this campaign?');"
+                                >
+                                    Delete
+                                </button>
+                            </form>
+                        </div>
                     </article>
                 @empty
                     <article class="rounded-2xl border border-dashed border-[#c4c6cf] bg-white/80 p-8 text-center shadow-sm">
