@@ -22,7 +22,8 @@ COPY --from=composer_deps /app/vendor ./vendor
 COPY . .
 COPY --from=frontend /app/public/build ./public/build
 
-RUN php artisan package:discover --ansi \
+RUN rm -f public/hot \
+    && php artisan package:discover --ansi \
     && mkdir -p storage/framework/{cache,sessions,views} bootstrap/cache \
     && chown -R www-data:www-data storage bootstrap/cache
 
