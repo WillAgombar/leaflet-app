@@ -8,11 +8,19 @@ use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\DB;
 
-
 class CampaignController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
+        $adminToken = (string) config('services.admin_token', '');
+        $providedToken = $request->query('admin');
+
+        if ($adminToken !== '' && is_string($providedToken) && hash_equals($adminToken, $providedToken)) {
+            $request->session()->put('is_admin', true);
+        }
+
+        $isAdmin = $request->session()->get('is_admin', false) === true;
+
         $campaigns = Campaigns::query()
             ->withCount('mapRoutes')
             ->withCount([
@@ -23,8 +31,7 @@ class CampaignController extends Controller
             ->latest()
             ->get();
 
-
-        return view('campaigns.index', compact('campaigns'));
+        return view('campaigns.index', compact('campaigns', 'isAdmin'));
     }
 
     public function create(): View
@@ -51,7 +58,7 @@ class CampaignController extends Controller
         return redirect()->route('campaigns.index')->with('success', 'Campaign created successfully!');
     }
 
-     public function destroy(Campaigns $campaign)
+    public function destroy(Campaigns $campaign): RedirectResponse
     {
         $campaign->delete();
 

@@ -12,6 +12,9 @@ Route::get('/campaigns/{campaign}/map', [MapRouteController::class, 'showForCamp
 Route::post('/campaigns/{campaign}/map-routes', [MapRouteController::class, 'storeForCampaign'])->name('campaigns.map-routes.store');
 
 Route::get('/campaigns', [CampaignController::class, 'index'])->name('campaigns.index');
-Route::get('/campaigns/create', [CampaignController::class, 'create'])->name('campaigns.create');
-Route::post('/campaigns', [CampaignController::class, 'store'])->name('campaigns.store');
-Route::delete('/campaigns/{campaign}', [CampaignController::class, 'destroy'])->name('campaigns.destroy');
+
+Route::middleware('admin.token')->group(function (): void {
+    Route::get('/campaigns/create', [CampaignController::class, 'create'])->name('campaigns.create');
+    Route::post('/campaigns', [CampaignController::class, 'store'])->name('campaigns.store');
+    Route::delete('/campaigns/{campaign}', [CampaignController::class, 'destroy'])->name('campaigns.destroy');
+});

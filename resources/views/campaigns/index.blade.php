@@ -36,12 +36,14 @@
                 <p class="text-[11px] font-black uppercase tracking-[0.2em] text-[#1b5e20]">Available Now</p>
                 <h2 class="mt-3 font-['Plus_Jakarta_Sans'] text-2xl font-black leading-tight text-[#1b5e20]">Choose a Campaign</h2>
                 <p class="mt-2 text-sm leading-relaxed text-[#444746]">Select a campaign to start marking routes for your assigned area.</p>
-                <a
-                    href="{{ route('campaigns.create') }}"
-                    class="mt-4 inline-flex h-11 items-center justify-center rounded-xl border-b-2 border-[#2e7d32] bg-[#1b5e20] px-5 text-sm font-black uppercase tracking-wide text-white shadow-lg shadow-[#1b5e2033] transition-all active:scale-95"
-                >
-                    Create Campaign
-                </a>
+                @if($isAdmin ?? false)
+                    <a
+                        href="{{ route('campaigns.create') }}"
+                        class="mt-4 inline-flex h-11 items-center justify-center rounded-xl border-b-2 border-[#2e7d32] bg-[#1b5e20] px-5 text-sm font-black uppercase tracking-wide text-white shadow-lg shadow-[#1b5e2033] transition-all active:scale-95"
+                    >
+                        Create Campaign
+                    </a>
+                @endif
             </div>
 
             <div class="space-y-4">
@@ -75,17 +77,19 @@
                             >
                                 Select Campaign
                             </a>
-                            <form method="POST" action="{{ route('campaigns.destroy', $campaign) }}">
-                                @csrf
-                                @method('DELETE')
-                                <button
-                                    type="submit"
-                                    class="inline-flex h-11 items-center justify-center rounded-xl border-b-2 border-[#b71c1c] bg-[#d32f2f] px-5 text-sm font-black uppercase tracking-wide text-white shadow-lg shadow-[#d32f2f33] transition-all active:scale-95"
-                                    onclick="return confirm('Are you sure you want to delete this campaign?');"
-                                >
-                                    Delete
-                                </button>
-                            </form>
+                            @if($isAdmin ?? false)
+                                <form method="POST" action="{{ route('campaigns.destroy', $campaign) }}">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button
+                                        type="submit"
+                                        class="inline-flex h-11 items-center justify-center rounded-xl border-b-2 border-[#b71c1c] bg-[#d32f2f] px-5 text-sm font-black uppercase tracking-wide text-white shadow-lg shadow-[#d32f2f33] transition-all active:scale-95"
+                                        onclick="return confirm('Are you sure you want to delete this campaign?');"
+                                    >
+                                        Delete
+                                    </button>
+                                </form>
+                            @endif
                         </div>
                     </article>
                 @empty
