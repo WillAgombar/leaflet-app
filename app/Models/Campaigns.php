@@ -21,4 +21,9 @@ class Campaigns extends Model
     {
         return $this->hasMany(MapRoute::class, 'campaign_id');
     }
+
+    public function campaignRoutes(): HasMany
+    {
+        return $this->hasMany(CampaignRoute::class, 'campaign_id');
+    }
 }

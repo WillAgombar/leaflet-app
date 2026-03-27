@@ -3,6 +3,7 @@ const trackerRoot = document.querySelector('[data-leaflet-tracker]');
 if (trackerRoot) {
     const mapElement = document.getElementById('tracker-map');
     const nameInput = document.getElementById('name-input');
+    const nameLabel = document.getElementById('name-label');
     const statusElement = document.getElementById('tracker-status');
     const undoButton = document.getElementById('undo-button');
     const resetButton = document.getElementById('reset-button');
@@ -14,6 +15,19 @@ if (trackerRoot) {
     if (!mapElement || !nameInput || !statusElement || !undoButton || !resetButton || !saveButton || !saveButtonLabel || !locateButton || !layersButton) {
         throw new Error('Leaflet tracker UI is missing required elements.');
     }
+
+    const mode = trackerRoot.dataset.mode ?? 'volunteer';
+    const isTemplateMode = mode === 'template';
+    const saveButtonDefaultLabel = isTemplateMode ? 'Save Route Template' : 'Finish and Save Route';
+    const saveButtonSavingLabel = isTemplateMode ? 'Saving Template...' : 'Saving Route...';
+    const routeLabelState = isTemplateMode ? 'Template' : 'Completed';
+
+    if (nameLabel) {
+        nameLabel.textContent = isTemplateMode ? 'Enter route name' : 'Enter your name';
+    }
+
+    nameInput.placeholder = isTemplateMode ? 'e.g. Downtown Loop' : 'e.g. Michael Scott';
+    saveButtonLabel.textContent = saveButtonDefaultLabel;
 
     const mapCenter = [51.0629, -1.3160];
     const map = L.map(mapElement, {
@@ -75,7 +89,7 @@ if (trackerRoot) {
         saveButton.disabled = isSaving;
         saveButton.classList.toggle('opacity-70', isSaving);
         saveButton.classList.toggle('cursor-not-allowed', isSaving);
-        saveButtonLabel.textContent = isSaving ? 'Saving Route...' : 'Finish and Save Route';
+        saveButtonLabel.textContent = isSaving ? saveButtonSavingLabel : saveButtonDefaultLabel;
     };
 
     const addRouteLabel = (layer, name) => {
@@ -94,7 +108,7 @@ if (trackerRoot) {
                 <div class="route-label-chip" title="${escapeHtml(displayName)}">
                     <span class="route-label-chip__dot"></span>
                     <span class="route-label-chip__meta">
-                        <span class="route-label-chip__state">Completed</span>
+                        <span class="route-label-chip__state">${routeLabelState}</span>
                         <span class="route-label-chip__name">${escapeHtml(displayName)}</span>
                     </span>
                 </div>
@@ -412,7 +426,7 @@ if (trackerRoot) {
         const volunteerName = nameInput.value.trim();
 
         if (!volunteerName) {
-            setStatus('Please enter your name before saving.', false);
+            setStatus(isTemplateMode ? 'Please enter a route name before saving.' : 'Please enter your name before saving.', false);
 
             return;
         }

@@ -10,16 +10,9 @@ use Illuminate\Support\Facades\DB;
 
 class CampaignController extends Controller
 {
-    public function index(Request $request): View
+    public function index(): View
     {
-        $adminToken = (string) config('services.admin_token', '');
-        $providedToken = $request->query('admin');
-
-        if ($adminToken !== '' && is_string($providedToken) && hash_equals($adminToken, $providedToken)) {
-            $request->session()->put('is_admin', true);
-        }
-
-        $isAdmin = $request->session()->get('is_admin', false) === true;
+        $isAdmin = auth()->check() && auth()->user()?->is_admin === true;
 
         $campaigns = Campaigns::query()
             ->withCount('mapRoutes')

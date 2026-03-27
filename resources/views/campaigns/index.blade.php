@@ -70,6 +70,23 @@
                             </span>
                         </div>
 
+                        @if($isAdmin ?? false)
+                            <div class="mt-4 flex flex-wrap gap-2">
+                                <a
+                                    href="{{ route('campaigns.map.templates', $campaign) }}"
+                                    class="inline-flex h-10 items-center justify-center rounded-xl border-2 border-[#e8f5e9] bg-white px-4 text-xs font-black uppercase tracking-wide text-[#1b5e20] transition-all active:scale-95"
+                                >
+                                    Template Mode
+                                </a>
+                                <a
+                                    href="{{ route('campaigns.assignments.index', $campaign) }}"
+                                    class="inline-flex h-10 items-center justify-center rounded-xl border-2 border-[#e8f5e9] bg-white px-4 text-xs font-black uppercase tracking-wide text-[#1b5e20] transition-all active:scale-95"
+                                >
+                                    Assignments
+                                </a>
+                            </div>
+                        @endif
+
                         <div class="mt-5 flex flex-wrap gap-3">
                             <a
                                 href="{{ route('campaigns.map.show', $campaign) }}"
@@ -103,10 +120,10 @@
         </section>
 
         <x-mobile-bottom-nav
-            active="log"
-            mark-road-href="{{ route('map-routes.show') }}"
-            log-href="{{ route('campaigns.index') }}"
-            setup-href="#"
+            active="campaigns"
+            campaigns-href="{{ route('campaigns.index') }}"
+            routes-href="{{ route('routes.index') }}"
+            profile-href="{{ route('profile.show') }}"
         />
     </main>
 @endsection

@@ -97,6 +97,7 @@
         data-leaflet-tracker
         data-routes='@json($mapRoutes)'
         data-save-url="{{ $saveUrl ?? route('map-routes.store') }}"
+        data-mode="{{ $mode ?? 'volunteer' }}"
         class="relative h-dvh min-h-[44rem] w-full overflow-hidden bg-white"
     >
         <header
@@ -122,8 +123,17 @@
                     </div>
                 @endif
 
+                @if (!empty($campaign) && ($isAdmin ?? false) && !empty($modeToggleUrl))
+                    <div class="flex items-center justify-between rounded-xl border border-[#dcedc8] bg-white/95 px-4 py-3 text-sm font-semibold text-[#1b5e20] shadow-sm">
+                        <span>Mode: <span class="font-black">{{ ($mode ?? 'volunteer') === 'template' ? 'Template' : 'Volunteer' }}</span></span>
+                        <a href="{{ $modeToggleUrl }}" class="text-xs font-black uppercase tracking-wide text-[#1b5e20] underline decoration-[#a5d6a7] decoration-2">
+                            Switch Mode
+                        </a>
+                    </div>
+                @endif
+
                 <div class="rounded-2xl border border-[#e8f5e9] bg-white/95 p-6 shadow-xl backdrop-blur-xl tracker-shadow">
-                    <label for="name-input" class="mb-3 ml-1 block text-[11px] font-black uppercase tracking-[0.2em] text-[#1b5e20]">
+                    <label id="name-label" for="name-input" class="mb-3 ml-1 block text-[11px] font-black uppercase tracking-[0.2em] text-[#1b5e20]">
                         Enter your name
                     </label>
                     <div class="group relative">
@@ -195,10 +205,10 @@
         </section>
 
         <x-mobile-bottom-nav
-            active="mark-road"
-            mark-road-href="{{ route('map-routes.show') }}"
-            log-href="{{ route('campaigns.index') }}"
-            setup-href="#"
+            active="routes"
+            campaigns-href="{{ route('campaigns.index') }}"
+            routes-href="{{ route('routes.index') }}"
+            profile-href="{{ route('profile.show') }}"
         />
     </main>
 @endsection

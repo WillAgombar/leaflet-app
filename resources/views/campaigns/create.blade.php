@@ -121,10 +121,10 @@
         </section>
 
         <x-mobile-bottom-nav
-            active="log"
-            mark-road-href="{{ route('map-routes.show') }}"
-            log-href="{{ route('campaigns.index') }}"
-            setup-href="#"
+            active="campaigns"
+            campaigns-href="{{ route('campaigns.index') }}"
+            routes-href="{{ route('routes.index') }}"
+            profile-href="{{ route('profile.show') }}"
         />
     </main>
 @endsection
