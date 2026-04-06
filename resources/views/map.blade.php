@@ -96,8 +96,13 @@
     <main
         data-leaflet-tracker
         data-routes='@json($mapRoutes)'
+        data-assigned-routes='@json($assignedRoutes ?? [])'
         data-save-url="{{ $saveUrl ?? route('map-routes.store') }}"
         data-mode="{{ $mode ?? 'volunteer' }}"
+        @if (($mode ?? 'volunteer') === 'template' && !empty($campaign))
+            data-area-generate-url="{{ route('campaigns.routes.area', $campaign) }}"
+            data-update-url-base="{{ route('campaigns.routes.update', [$campaign, 0]) }}"
+        @endif
         class="relative h-dvh min-h-[44rem] w-full overflow-hidden bg-white"
     >
         <header
@@ -146,7 +151,49 @@
                         >
                         <x-icon name="edit" class="pointer-events-none absolute right-4 top-4 h-6 w-6 text-[#1b5e2066]" />
                     </div>
+                    @if (($mode ?? 'volunteer') === 'template')
+                        <div class="mt-4">
+                            <label for="route-edit-select" class="mb-2 block text-[11px] font-black uppercase tracking-[0.2em] text-[#1b5e20]">
+                                Edit Existing Route (Optional)
+                            </label>
+                            <select
+                                id="route-edit-select"
+                                class="h-12 w-full rounded-xl border-2 border-transparent bg-[#f1f8f1] px-4 text-sm font-semibold text-[#121212] transition-all focus:border-[#1b5e2033] focus:ring-0"
+                            >
+                                <option value="">Create new route</option>
+                            </select>
+                        </div>
+                    @endif
                 </div>
+
+                @if (($mode ?? 'volunteer') === 'template')
+                    <div class="rounded-2xl border border-[#e8f5e9] bg-white/95 p-5 shadow-xl backdrop-blur-xl tracker-shadow">
+                        <div class="flex items-center justify-between gap-4">
+                            <div>
+                                <p class="text-[11px] font-black uppercase tracking-[0.2em] text-[#1b5e20]">Area Generate</p>
+                                <p class="mt-2 text-xs font-semibold text-[#41493e]">
+                                    Tap to place points, then finish to capture every road inside the shape.
+                                </p>
+                            </div>
+                            <button
+                                id="area-select-button"
+                                type="button"
+                                class="rounded-full bg-[#1b5e20] px-4 py-2 text-[11px] font-black uppercase tracking-[0.2em] text-white shadow-[0_8px_16px_rgba(27,94,32,0.18)] transition-all active:scale-95"
+                            >
+                                <span id="area-select-label">Select Area</span>
+                            </button>
+                        </div>
+                        <div class="mt-3 flex justify-end">
+                            <button
+                                id="area-finish-button"
+                                type="button"
+                                class="rounded-full border border-[#c0c9bb] bg-white px-4 py-2 text-[11px] font-black uppercase tracking-[0.2em] text-[#41493e] transition-all active:scale-95"
+                            >
+                                <span id="area-finish-label">Finish Area</span>
+                            </button>
+                        </div>
+                    </div>
+                @endif
 
                 <div id="tracker-status" class="hidden rounded-xl bg-[#e8f5e9] px-4 py-3 text-sm font-semibold text-[#1b5e20]"></div>
             </div>

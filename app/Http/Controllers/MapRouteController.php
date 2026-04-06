@@ -60,7 +60,6 @@ class MapRouteController extends Controller
         $mapRoutes = MapRoute::query()
             ->where('campaign_id', $campaign->id)
             ->latest()
-            ->limit(20)
             ->get()
             ->map(function (MapRoute $mapRoute): array {
                 return [
@@ -71,8 +70,26 @@ class MapRouteController extends Controller
             })
             ->values();
 
+        $assignedRoutes = CampaignRoute::query()
+            ->where('campaign_id', $campaign->id)
+            ->whereHas('assignment', function ($query): void {
+                $query->whereIn('status', ['assigned', 'in_progress', 'completed']);
+            })
+            ->with('assignment')
+            ->get()
+            ->map(function (CampaignRoute $campaignRoute): array {
+                return [
+                    'id' => $campaignRoute->id,
+                    'name' => $campaignRoute->name,
+                    'route' => $campaignRoute->route_data,
+                    'status' => $campaignRoute->assignment?->status ?? 'assigned',
+                ];
+            })
+            ->values();
+
         return view('map', [
             'mapRoutes' => $mapRoutes,
+            'assignedRoutes' => $assignedRoutes,
             'saveUrl' => $saveUrl,
             'campaign' => $campaign,
             'mode' => $mode,

@@ -15,6 +15,8 @@ if (assignmentRoot) {
     const resumeBanner = document.getElementById('resume-banner');
     const resumeTimeElement = document.getElementById('resume-time');
     const resumeButton = document.getElementById('resume-tracking-button');
+    const manualMarkButton = document.getElementById('manual-mark-button');
+    const manualMarkLabel = document.getElementById('manual-mark-label');
 
     if (!mapElement || !statusElement || !startButton || !completeButton) {
         throw new Error('Assignment UI is missing required elements.');
@@ -66,8 +68,37 @@ if (assignmentRoot) {
         return [earthRadius * lngRad * Math.cos(refLat), earthRadius * latRad];
     };
 
-    const routeCoordinates = routeData?.features?.[0]?.geometry?.coordinates ?? [];
-    const hasRouteCoordinates = Array.isArray(routeCoordinates) && routeCoordinates.length > 1;
+    const lineStrings = [];
+
+    if (routeData?.type === 'FeatureCollection') {
+        (routeData.features ?? []).forEach((feature) => {
+            if (!feature?.geometry) {
+                return;
+            }
+
+            if (feature.geometry.type === 'LineString') {
+                const coords = feature.geometry.coordinates;
+
+                if (Array.isArray(coords) && coords.length > 1) {
+                    lineStrings.push(coords);
+                }
+            }
+
+            if (feature.geometry.type === 'MultiLineString') {
+                const coords = feature.geometry.coordinates;
+
+                if (Array.isArray(coords)) {
+                    coords.forEach((segment) => {
+                        if (Array.isArray(segment) && segment.length > 1) {
+                            lineStrings.push(segment);
+                        }
+                    });
+                }
+            }
+        });
+    }
+
+    const hasRouteCoordinates = lineStrings.length > 0;
 
     const buildRouteIndex = (coordinates) => {
         if (!Array.isArray(coordinates) || coordinates.length < 2) {
@@ -101,109 +132,80 @@ if (assignmentRoot) {
         };
     };
 
-    const routeIndex = buildRouteIndex(routeCoordinates);
-    const totalRouteLengthMeters = routeIndex?.totalLength ?? null;
+    const routeIndexes = lineStrings.map((coords) => buildRouteIndex(coords)).filter(Boolean);
+    const totalRouteLengthMeters = routeIndexes.reduce((sum, index) => sum + (index?.totalLength ?? 0), 0);
 
     const calculateRouteLengthKm = () => {
-        if (!routeIndex) {
+        if (!routeIndexes.length) {
             return null;
         }
 
-        return routeIndex.totalLength / 1000;
+        return totalRouteLengthMeters / 1000;
     };
 
     const projectPointToRoute = (point) => {
-        if (!routeIndex || !hasRouteCoordinates) {
+        if (!routeIndexes.length || !hasRouteCoordinates) {
             return null;
         }
 
         let closestDistance = Number.POSITIVE_INFINITY;
         let distanceAlong = 0;
+        let matchedIndex = 0;
 
-        for (let index = 0; index < routeCoordinates.length - 1; index += 1) {
-            const start = routeCoordinates[index];
-            const end = routeCoordinates[index + 1];
-            const refLat = toRadians((start[1] + end[1]) / 2);
-            const startMeters = toMeters(start, refLat);
-            const endMeters = toMeters(end, refLat);
-            const pointMeters = toMeters(point, refLat);
-            const segmentVector = [endMeters[0] - startMeters[0], endMeters[1] - startMeters[1]];
-            const segmentLengthSquared = segmentVector[0] ** 2 + segmentVector[1] ** 2;
-            const segmentLength = Math.sqrt(segmentLengthSquared);
-
-            let projection = 0;
-
-            if (segmentLengthSquared > 0) {
-                projection =
-                    ((pointMeters[0] - startMeters[0]) * segmentVector[0] +
-                        (pointMeters[1] - startMeters[1]) * segmentVector[1]) /
-                    segmentLengthSquared;
+        routeIndexes.forEach((routeIndex, routeIndexIndex) => {
+            if (!routeIndex) {
+                return;
             }
 
-            const clampedProjection = Math.min(Math.max(projection, 0), 1);
-            const closestPoint = [
-                startMeters[0] + clampedProjection * segmentVector[0],
-                startMeters[1] + clampedProjection * segmentVector[1],
-            ];
-            const distanceFromSegment = Math.hypot(
-                pointMeters[0] - closestPoint[0],
-                pointMeters[1] - closestPoint[1]
-            );
+            const coordinates = lineStrings[routeIndexIndex] ?? [];
 
-            if (distanceFromSegment < closestDistance) {
-                closestDistance = distanceFromSegment;
-                distanceAlong = routeIndex.cumulativeDistances[index] + clampedProjection * segmentLength;
+            for (let index = 0; index < coordinates.length - 1; index += 1) {
+                const start = coordinates[index];
+                const end = coordinates[index + 1];
+                const refLat = toRadians((start[1] + end[1]) / 2);
+                const startMeters = toMeters(start, refLat);
+                const endMeters = toMeters(end, refLat);
+                const pointMeters = toMeters(point, refLat);
+                const segmentVector = [endMeters[0] - startMeters[0], endMeters[1] - startMeters[1]];
+                const segmentLengthSquared = segmentVector[0] ** 2 + segmentVector[1] ** 2;
+                const segmentLength = Math.sqrt(segmentLengthSquared);
+
+                let projection = 0;
+
+                if (segmentLengthSquared > 0) {
+                    projection =
+                        ((pointMeters[0] - startMeters[0]) * segmentVector[0] +
+                            (pointMeters[1] - startMeters[1]) * segmentVector[1]) /
+                        segmentLengthSquared;
+                }
+
+                const clampedProjection = Math.min(Math.max(projection, 0), 1);
+                const closestPoint = [
+                    startMeters[0] + clampedProjection * segmentVector[0],
+                    startMeters[1] + clampedProjection * segmentVector[1],
+                ];
+                const distanceFromSegment = Math.hypot(
+                    pointMeters[0] - closestPoint[0],
+                    pointMeters[1] - closestPoint[1]
+                );
+
+                if (distanceFromSegment < closestDistance) {
+                    closestDistance = distanceFromSegment;
+                    distanceAlong = routeIndex.cumulativeDistances[index] + clampedProjection * segmentLength;
+                    matchedIndex = routeIndexIndex;
+                }
             }
-        }
+        });
 
         return {
             distanceAlong,
             distanceFromSegment: closestDistance,
+            routeIndex: matchedIndex,
         };
     };
 
-    const buildRouteSlice = (distanceAlong) => {
-        if (!routeIndex || !hasRouteCoordinates) {
-            return [];
-        }
-
-        const clampedDistance = Math.min(Math.max(distanceAlong, 0), routeIndex.totalLength);
-        const sliceCoordinates = [routeCoordinates[0]];
-        let remaining = clampedDistance;
-
-        for (let index = 0; index < routeCoordinates.length - 1; index += 1) {
-            if (remaining <= 0) {
-                break;
-            }
-
-            const segmentLength = routeIndex.segmentLengths[index];
-            const start = routeCoordinates[index];
-            const end = routeCoordinates[index + 1];
-
-            if (segmentLength <= 0) {
-                continue;
-            }
-
-            if (remaining >= segmentLength) {
-                sliceCoordinates.push(end);
-                remaining -= segmentLength;
-
-                continue;
-            }
-
-            const fraction = remaining / segmentLength;
-            sliceCoordinates.push([
-                start[0] + (end[0] - start[0]) * fraction,
-                start[1] + (end[1] - start[1]) * fraction,
-            ]);
-            remaining = 0;
-        }
-
-        return sliceCoordinates;
-    };
-
     const updateProgressDisplay = (distanceAlong) => {
-        if (!totalRouteLengthMeters || !progressValueElement || !progressBarElement) {
+        if (!totalRouteLengthMeters || totalRouteLengthMeters <= 0 || !progressValueElement || !progressBarElement) {
             return;
         }
 
@@ -213,18 +215,18 @@ if (assignmentRoot) {
     };
 
     let routeLayer = null;
-    let completedLayer = null;
+    const completedLayers = [];
     let locationMarker = null;
     let accuracyCircle = null;
 
     if (routeData && routeData.type === 'FeatureCollection') {
         routeLayer = L.geoJSON(routeData, {
             style: {
-                color: '#b7e1bf',
-                weight: 8,
+                color: '#1565c0',
+                weight: 9,
                 lineCap: 'round',
                 lineJoin: 'round',
-                opacity: 0.9,
+                opacity: 0.98,
             },
         }).addTo(map);
 
@@ -240,7 +242,7 @@ if (assignmentRoot) {
     if (routeLengthElement) {
         const lengthKm = calculateRouteLengthKm();
 
-        if (lengthKm) {
+        if (lengthKm !== null) {
             routeLengthElement.textContent = `${lengthKm.toFixed(1)} km`;
         }
     }
@@ -343,6 +345,15 @@ if (assignmentRoot) {
         maxDistance: 0,
         wakeLock: null,
         lastTrackedAt: null,
+        startDistanceAlong: Array(routeIndexes.length).fill(null),
+        maxProjectionDistance: Array(routeIndexes.length).fill(null),
+    };
+
+    const manualState = {
+        active: false,
+        points: [],
+        layer: null,
+        verticesLayer: null,
     };
 
     const updateTrackingUI = () => {
@@ -390,30 +401,92 @@ if (assignmentRoot) {
         }
     };
 
-    const updateCompletedRoute = (distanceAlong) => {
+    const buildRouteSliceBetween = (routeIndex, coordinates, startDistance, endDistance) => {
+        if (!routeIndex || !Array.isArray(coordinates) || coordinates.length < 2) {
+            return [];
+        }
+
+        const clampedStart = Math.min(Math.max(startDistance, 0), routeIndex.totalLength);
+        const clampedEnd = Math.min(Math.max(endDistance, 0), routeIndex.totalLength);
+
+        if (clampedEnd <= clampedStart) {
+            return [];
+        }
+
+        const sliceCoordinates = [];
+
+        for (let index = 0; index < coordinates.length - 1; index += 1) {
+            const segmentLength = routeIndex.segmentLengths[index];
+
+            if (!segmentLength) {
+                continue;
+            }
+
+            const segmentStartDistance = routeIndex.cumulativeDistances[index];
+            const segmentEndDistance = routeIndex.cumulativeDistances[index + 1];
+
+            if (clampedEnd < segmentStartDistance || clampedStart > segmentEndDistance) {
+                continue;
+            }
+
+            const startFraction = Math.max(0, (clampedStart - segmentStartDistance) / segmentLength);
+            const endFraction = Math.min(1, (clampedEnd - segmentStartDistance) / segmentLength);
+            const startCoord = coordinates[index];
+            const endCoord = coordinates[index + 1];
+            const interpolate = (fraction) => [
+                startCoord[0] + (endCoord[0] - startCoord[0]) * fraction,
+                startCoord[1] + (endCoord[1] - startCoord[1]) * fraction,
+            ];
+
+            if (!sliceCoordinates.length) {
+                sliceCoordinates.push(interpolate(startFraction));
+            }
+
+            sliceCoordinates.push(interpolate(endFraction));
+        }
+
+        return sliceCoordinates;
+    };
+
+    const updateCompletedRoute = (startDistances, endDistances) => {
         if (!hasRouteCoordinates) {
             return;
         }
 
-        const slice = buildRouteSlice(distanceAlong);
+        routeIndexes.forEach((routeIndex, index) => {
+            if (!routeIndex) {
+                return;
+            }
 
-        if (!slice.length) {
-            return;
-        }
+            const coordinates = lineStrings[index] ?? [];
+            const startDistance = startDistances[index] ?? 0;
+            const endDistance = endDistances[index] ?? 0;
+            const slice = buildRouteSliceBetween(routeIndex, coordinates, startDistance, endDistance);
 
-        if (!completedLayer) {
-            completedLayer = L.polyline(slice.map((coord) => [coord[1], coord[0]]), {
-                color: '#1b5e20',
-                weight: 8,
-                lineCap: 'round',
-                lineJoin: 'round',
-                opacity: 0.95,
-            }).addTo(map);
+            if (!slice.length) {
+                if (completedLayers[index]) {
+                    completedLayers[index].setLatLngs([]);
+                }
 
-            return;
-        }
+                return;
+            }
 
-        completedLayer.setLatLngs(slice.map((coord) => [coord[1], coord[0]]));
+            const latLngs = slice.map((coord) => [coord[1], coord[0]]);
+
+            if (!completedLayers[index]) {
+                completedLayers[index] = L.polyline(latLngs, {
+                    color: '#00c853',
+                    weight: 8,
+                    lineCap: 'round',
+                    lineJoin: 'round',
+                    opacity: 0.95,
+                }).addTo(map);
+
+                return;
+            }
+
+            completedLayers[index].setLatLngs(latLngs);
+        });
     };
 
     const updateLocationMarker = (point, accuracy) => {
@@ -519,6 +592,18 @@ if (assignmentRoot) {
         }
     };
 
+    const defaultTrackingNote = 'Keep this screen open while tracking your route.';
+
+    const resolveRouteThreshold = (accuracy) => {
+        const baseline = 35;
+
+        if (typeof accuracy !== 'number' || Number.isNaN(accuracy)) {
+            return baseline;
+        }
+
+        return Math.max(baseline, Math.min(accuracy * 2, 120));
+    };
+
     const handlePosition = async (position) => {
         const rawPoint = [position.coords.longitude, position.coords.latitude];
         const accuracy = position.coords.accuracy;
@@ -546,11 +631,38 @@ if (assignmentRoot) {
 
         if (hasRouteCoordinates) {
             const projection = projectPointToRoute(snappedPoint);
+            const threshold = resolveRouteThreshold(accuracy);
 
-            if (projection && projection.distanceAlong > trackingState.maxDistance) {
-                trackingState.maxDistance = projection.distanceAlong;
-                updateProgressDisplay(trackingState.maxDistance);
-                updateCompletedRoute(trackingState.maxDistance);
+            if (projection && projection.distanceFromSegment <= threshold) {
+                const routeIndex = projection.routeIndex ?? 0;
+                const startDistances = trackingState.startDistanceAlong;
+                const maxDistances = trackingState.maxProjectionDistance;
+
+                if (startDistances[routeIndex] === null) {
+                    startDistances[routeIndex] = projection.distanceAlong;
+                    maxDistances[routeIndex] = projection.distanceAlong;
+                } else if (projection.distanceAlong > (maxDistances[routeIndex] ?? 0)) {
+                    maxDistances[routeIndex] = projection.distanceAlong;
+                }
+
+                let traveled = 0;
+                startDistances.forEach((startDistance, index) => {
+                    if (startDistance === null || maxDistances[index] === null) {
+                        return;
+                    }
+
+                    traveled += Math.max(maxDistances[index] - startDistance, 0);
+                });
+
+                trackingState.maxDistance = traveled;
+                updateProgressDisplay(traveled);
+                updateCompletedRoute(startDistances, maxDistances);
+
+                if (trackingNoteElement) {
+                    trackingNoteElement.textContent = defaultTrackingNote;
+                }
+            } else if (trackingNoteElement) {
+                trackingNoteElement.textContent = 'Move closer to the route to track progress.';
             }
         }
 
@@ -678,7 +790,8 @@ if (assignmentRoot) {
                 return;
             }
 
-            let maxDistance = 0;
+            const startProjection = Array(routeIndexes.length).fill(null);
+            const maxProjection = Array(routeIndexes.length).fill(null);
             const lastPoint = points[points.length - 1];
 
             points.forEach((point) => {
@@ -687,15 +800,45 @@ if (assignmentRoot) {
                     point.snapped_latitude ?? point.latitude,
                 ];
                 const projection = projectPointToRoute(pointCoordinates);
+                const threshold = resolveRouteThreshold(point.accuracy);
 
-                if (projection && projection.distanceAlong > maxDistance) {
-                    maxDistance = projection.distanceAlong;
+                if (!projection || projection.distanceFromSegment > threshold) {
+                    return;
+                }
+
+                const routeIndex = projection.routeIndex ?? 0;
+
+                if (startProjection[routeIndex] === null) {
+                    startProjection[routeIndex] = projection.distanceAlong;
+                    maxProjection[routeIndex] = projection.distanceAlong;
+
+                    return;
+                }
+
+                if (projection.distanceAlong > (maxProjection[routeIndex] ?? 0)) {
+                    maxProjection[routeIndex] = projection.distanceAlong;
                 }
             });
 
-            trackingState.maxDistance = maxDistance;
-            updateProgressDisplay(maxDistance);
-            updateCompletedRoute(maxDistance);
+            const hasProgress = startProjection.some((value) => value !== null);
+
+            if (hasProgress) {
+                trackingState.startDistanceAlong = startProjection;
+                trackingState.maxProjectionDistance = maxProjection;
+                let traveled = 0;
+                startProjection.forEach((startDistance, index) => {
+                    if (startDistance === null || maxProjection[index] === null) {
+                        return;
+                    }
+
+                    traveled += Math.max(maxProjection[index] - startDistance, 0);
+                });
+                trackingState.maxDistance = traveled;
+                updateProgressDisplay(traveled);
+                updateCompletedRoute(startProjection, maxProjection);
+            } else {
+                updateProgressDisplay(0);
+            }
 
             if (lastPoint) {
                 const lastCoordinates = [
@@ -768,9 +911,120 @@ if (assignmentRoot) {
         resumeBanner.classList.remove('hidden');
     };
 
+    const setManualLabel = () => {
+        if (!manualMarkLabel) {
+            return;
+        }
+
+        manualMarkLabel.textContent = manualState.active ? 'Stop Manual' : 'Mark Manually';
+    };
+
+    const handleManualPoint = async (latLng) => {
+        const rawPoint = [latLng.lng, latLng.lat];
+        const projection = projectPointToRoute(rawPoint);
+
+        const threshold = resolveRouteThreshold(null);
+
+        if (projection && projection.distanceFromSegment <= threshold) {
+            const routeIndex = projection.routeIndex ?? 0;
+            const startDistances = trackingState.startDistanceAlong;
+            const maxDistances = trackingState.maxProjectionDistance;
+
+            if (startDistances[routeIndex] === null) {
+                startDistances[routeIndex] = projection.distanceAlong;
+                maxDistances[routeIndex] = projection.distanceAlong;
+            } else if (projection.distanceAlong > (maxDistances[routeIndex] ?? 0)) {
+                maxDistances[routeIndex] = projection.distanceAlong;
+            }
+
+            let traveled = 0;
+            startDistances.forEach((startDistance, index) => {
+                if (startDistance === null || maxDistances[index] === null) {
+                    return;
+                }
+
+                traveled += Math.max(maxDistances[index] - startDistance, 0);
+            });
+
+            trackingState.maxDistance = traveled;
+            updateProgressDisplay(traveled);
+            updateCompletedRoute(startDistances, maxDistances);
+        } else if (trackingNoteElement) {
+            trackingNoteElement.textContent = 'Tap closer to the route to mark it manually.';
+        }
+
+        updateLocationMarker(rawPoint, null);
+
+        await sendTrackingPoint({
+            latitude: rawPoint[1],
+            longitude: rawPoint[0],
+            snapped_latitude: rawPoint[1],
+            snapped_longitude: rawPoint[0],
+            accuracy: null,
+            captured_at: new Date().toISOString(),
+        });
+    };
+
+    if (trackingNoteElement) {
+        trackingNoteElement.textContent = defaultTrackingNote;
+    }
+
     if (trackingNoteElement && !('geolocation' in navigator)) {
         trackingNoteElement.textContent = 'Geolocation is unavailable in this browser.';
     }
+
+    if (manualMarkButton) {
+        manualMarkButton.addEventListener('click', () => {
+            manualState.active = !manualState.active;
+            setManualLabel();
+
+            if (manualState.active) {
+                manualState.points = [];
+                if (manualState.layer) {
+                    map.removeLayer(manualState.layer);
+                    manualState.layer = null;
+                }
+                if (manualState.verticesLayer) {
+                    map.removeLayer(manualState.verticesLayer);
+                }
+                manualState.verticesLayer = L.layerGroup().addTo(map);
+                setStatus('Tap the map to mark roads manually.');
+            } else {
+                setStatus('Manual marking paused.');
+            }
+        });
+    }
+
+    map.on('click', (event) => {
+        if (!manualState.active) {
+            return;
+        }
+
+        manualState.points.push(event.latlng);
+
+        if (manualState.verticesLayer) {
+            L.circleMarker(event.latlng, {
+                radius: 4,
+                color: '#1b5e20',
+                fillColor: '#1b5e20',
+                fillOpacity: 0.9,
+                weight: 1,
+            }).addTo(manualState.verticesLayer);
+        }
+
+        if (!manualState.layer) {
+            manualState.layer = L.polyline(manualState.points, {
+                color: '#1b5e20',
+                weight: 4,
+                dashArray: '8 8',
+                opacity: 0.9,
+            }).addTo(map);
+        } else {
+            manualState.layer.setLatLngs(manualState.points);
+        }
+
+        handleManualPoint(event.latlng);
+    });
 
     startButton.addEventListener('click', toggleTracking);
 
@@ -801,6 +1055,7 @@ if (assignmentRoot) {
         }
     });
 
+    setManualLabel();
     updateTrackingUI();
     loadExistingTracking();
 }

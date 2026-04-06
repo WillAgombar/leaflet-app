@@ -163,6 +163,14 @@
                     <x-icon name="check-circle" class="h-5 w-5" />
                 </button>
                 <button
+                    id="manual-mark-button"
+                    type="button"
+                    class="flex h-12 w-full items-center justify-center gap-3 rounded-full border border-[#c0c9bb] bg-white text-xs font-black uppercase tracking-[0.2em] text-[#1b5e20] transition-all active:scale-95"
+                >
+                    <span id="manual-mark-label">Mark Manually</span>
+                    <x-icon name="edit" class="h-4 w-4" />
+                </button>
+                <button
                     id="complete-assignment-button"
                     type="button"
                     class="flex h-14 w-full items-center justify-center gap-3 rounded-full bg-[#1b5e20] text-sm font-black uppercase tracking-[0.2em] text-white shadow-lg transition-all active:scale-95"
