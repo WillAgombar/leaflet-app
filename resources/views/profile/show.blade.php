@@ -77,6 +77,15 @@
                     >
                         Browse Campaigns
                     </a>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button
+                            type="submit"
+                            class="inline-flex h-12 w-full items-center justify-center rounded-full border border-[#c0c9bb] bg-white text-xs font-black uppercase tracking-[0.2em] text-[#41493e] transition-all active:scale-95"
+                        >
+                            Log Out
+                        </button>
+                    </form>
                 </div>
             </div>
         </section>
