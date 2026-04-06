@@ -27,26 +27,17 @@
                     <x-icon name="polyline" class="h-6 w-6 text-[#1b5e20]" />
                     <h1 class="font-['Plus_Jakarta_Sans'] text-sm font-black uppercase tracking-wider text-[#1b5e20]">My Routes</h1>
                 </div>
-                <a href="{{ route('map-routes.show') }}" class="flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-[#dfe4df]/50">
-                    <x-icon name="edit" class="h-5 w-5 text-[#41493e]" />
-                </a>
             </div>
         </header>
 
         <section class="mx-auto max-w-md px-6 pt-24 space-y-8">
             <div class="rounded-2xl bg-white p-6 shadow-[0_10px_28px_rgba(23,29,26,0.06)]">
                 <h2 class="font-['Plus_Jakarta_Sans'] text-2xl font-black text-[#1b5e20]">Ready to head out?</h2>
-                <p class="mt-2 text-sm text-[#41493e]">Start a new route or pick up an assignment from your queue.</p>
+                <p class="mt-2 text-sm text-[#41493e]">Choose a campaign to complete an assigned route or add your own.</p>
                 <div class="mt-4 flex flex-wrap gap-3">
                     <a
-                        href="{{ route('map-routes.show') }}"
-                        class="inline-flex h-11 items-center justify-center rounded-full bg-[#1b5e20] px-5 text-xs font-black uppercase tracking-[0.2em] text-white shadow-[0_8px_16px_rgba(27,94,32,0.18)] transition-all active:scale-95"
-                    >
-                        Start New Route
-                    </a>
-                    <a
                         href="{{ route('campaigns.index') }}"
-                        class="inline-flex h-11 items-center justify-center rounded-full border border-[#c0c9bb] bg-white px-5 text-xs font-black uppercase tracking-[0.2em] text-[#41493e] transition-all active:scale-95"
+                        class="inline-flex h-11 items-center justify-center rounded-full bg-[#1b5e20] px-5 text-xs font-black uppercase tracking-[0.2em] text-white shadow-[0_8px_16px_rgba(27,94,32,0.18)] transition-all active:scale-95"
                     >
                         View Campaigns
                     </a>
@@ -55,7 +46,7 @@
 
             <div>
                 <h3 class="font-['Plus_Jakarta_Sans'] text-lg font-black text-[#1b5e20]">Assigned Routes</h3>
-                <p class="mt-1 text-sm text-[#41493e]">Routes waiting for you to start or finish.</p>
+                <p class="mt-1 text-sm text-[#41493e]">These are tied to campaigns and ready for you to work on.</p>
             </div>
 
             <div class="space-y-4">
@@ -76,18 +67,12 @@
                             </span>
                         </div>
 
-                        <div class="mt-4 flex gap-3">
+                        <div class="mt-4 flex">
                             <a
                                 href="{{ route('assignments.show', $assignment) }}"
                                 class="flex-1 rounded-full bg-[#1b5e20] px-4 py-3 text-center text-xs font-black uppercase tracking-[0.2em] text-white shadow-[0_8px_16px_rgba(27,94,32,0.18)] transition-all active:scale-95"
                             >
                                 Open Route
-                            </a>
-                            <a
-                                href="{{ route('map-routes.show') }}"
-                                class="flex-1 rounded-full border border-[#c0c9bb] px-4 py-3 text-center text-xs font-black uppercase tracking-[0.2em] text-[#41493e] transition-all active:scale-95"
-                            >
-                                Do My Own
                             </a>
                         </div>
                     </article>
@@ -100,7 +85,7 @@
 
             <div>
                 <h3 class="font-['Plus_Jakarta_Sans'] text-lg font-black text-[#1b5e20]">Completed</h3>
-                <p class="mt-1 text-sm text-[#41493e]">Your recent finished routes.</p>
+                <p class="mt-1 text-sm text-[#41493e]">Recently finished routes linked to campaigns.</p>
             </div>
 
             <div class="space-y-4">

@@ -28,6 +28,8 @@ Route::middleware('auth')->group(function (): void {
     Route::middleware('admin.user')->group(function (): void {
         Route::get('/campaigns/{campaign}/map/templates', [MapRouteController::class, 'showTemplates'])->name('campaigns.map.templates');
         Route::post('/campaigns/{campaign}/routes', [CampaignRouteController::class, 'store'])->name('campaigns.routes.store');
+        Route::patch('/campaigns/{campaign}/routes/{campaignRoute}', [CampaignRouteController::class, 'update'])->name('campaigns.routes.update');
+        Route::post('/campaigns/{campaign}/routes/area', [CampaignRouteController::class, 'storeFromArea'])->name('campaigns.routes.area');
         Route::get('/campaigns/{campaign}/assignments', [RouteAssignmentController::class, 'index'])->name('campaigns.assignments.index');
         Route::post('/campaigns/{campaign}/routes/{campaignRoute}/assignments', [RouteAssignmentController::class, 'store'])->name('campaigns.assignments.store');
         Route::get('/campaigns/create', [CampaignController::class, 'create'])->name('campaigns.create');
