@@ -6,6 +6,7 @@ use Database\Factories\RouteAssignmentFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class RouteAssignment extends Model
 {
@@ -36,5 +37,10 @@ class RouteAssignment extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function trackingPoints(): HasMany
+    {
+        return $this->hasMany(RouteTrackingPoint::class, 'route_assignment_id');
     }
 }
