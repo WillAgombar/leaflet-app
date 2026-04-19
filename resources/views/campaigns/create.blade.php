@@ -42,6 +42,12 @@
                 @csrf
 
                 <div class="space-y-4">
+                    @if(isset($duplicateFrom))
+                        <input type="hidden" name="duplicate_from" value="{{ $duplicateFrom->id }}">
+                        <div class="rounded-xl border border-[#a5d6a7] bg-[#e8f5e9] p-4 text-sm font-semibold text-[#1b5e20] mb-4">
+                            You are duplicating "{{ $duplicateFrom->name }}". All its routes will be copied over.
+                        </div>
+                    @endif
                     <div>
                         <label for="campaign-name" class="mb-2 block text-[11px] font-black uppercase tracking-[0.14em] text-[#1b5e20]">Campaign Name</label>
                         <input
@@ -49,7 +55,7 @@
                             name="name"
                             type="text"
                             placeholder="e.g. Winchester Spring Cleanup"
-                            value="{{ old('name') }}"
+                            value="{{ old('name', isset($duplicateFrom) ? 'Copy of ' . $duplicateFrom->name : '') }}"
                             class="h-12 w-full rounded-xl border border-[#dcedc8] bg-[#f8fdf8] px-4 font-semibold text-[#121212] placeholder:text-[#72777599] focus:border-[#1b5e2033] focus:outline-none"
                         >
                         @error('name')
@@ -65,7 +71,7 @@
                             rows="4"
                             placeholder="What is this campaign for?"
                             class="w-full rounded-xl border border-[#dcedc8] bg-[#f8fdf8] px-4 py-3 font-semibold text-[#121212] placeholder:text-[#72777599] focus:border-[#1b5e2033] focus:outline-none"
-                        >{{ old('description') }}</textarea>
+                        >{{ old('description', $duplicateFrom->description ?? '') }}</textarea>
                         @error('description')
                             <p class="mt-2 text-xs font-semibold text-[#ba1a1a]">{{ $message }}</p>
                         @enderror

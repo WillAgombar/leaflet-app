@@ -89,12 +89,18 @@
 
                         <div class="mt-5 flex flex-wrap gap-3">
                             <a
-                                href="{{ route('campaigns.map.show', $campaign) }}"
+                                href="{{ route('campaigns.show', $campaign) }}"
                                 class="inline-flex h-11 items-center justify-center rounded-xl border-b-2 border-[#2e7d32] bg-[#1b5e20] px-5 text-sm font-black uppercase tracking-wide text-white shadow-lg shadow-[#1b5e2033] transition-all active:scale-95"
                             >
                                 Select Campaign
                             </a>
                             @if($isAdmin ?? false)
+                                <a
+                                    href="{{ route('campaigns.create', ['duplicate_from' => $campaign->id]) }}"
+                                    class="inline-flex h-11 items-center justify-center rounded-xl border-2 border-[#1b5e20] bg-white px-5 text-sm font-black uppercase tracking-wide text-[#1b5e20] shadow-sm transition-all active:scale-95"
+                                >
+                                    Duplicate
+                                </a>
                                 <form method="POST" action="{{ route('campaigns.destroy', $campaign) }}">
                                     @csrf
                                     @method('DELETE')

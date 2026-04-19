@@ -11,13 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('route_assignments', function (Blueprint $table) {
-            $table->foreignId('user_id')
-                ->nullable()
-                ->after('campaign_route_id')
-                ->constrained('users')
-                ->cascadeOnDelete();
-        });
+        if (! Schema::hasColumn('route_assignments', 'user_id')) {
+            Schema::table('route_assignments', function (Blueprint $table) {
+                $table->foreignId('user_id')
+                    ->nullable()
+                    ->after('campaign_route_id')
+                    ->constrained('users')
+                    ->cascadeOnDelete();
+            });
+        }
     }
 
     /**
@@ -25,9 +27,11 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('route_assignments', function (Blueprint $table) {
-            $table->dropForeign(['user_id']);
-            $table->dropColumn('user_id');
-        });
+        if (Schema::hasColumn('route_assignments', 'user_id')) {
+            Schema::table('route_assignments', function (Blueprint $table) {
+                $table->dropForeign(['user_id']);
+                $table->dropColumn('user_id');
+            });
+        }
     }
 };

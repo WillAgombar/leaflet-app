@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -14,6 +15,9 @@ class MapRoutePageTest extends TestCase
         parent::setUp();
 
         $this->withoutVite();
+
+        $user = User::factory()->create();
+        $this->actingAs($user);
     }
 
     public function test_tracker_page_renders(): void

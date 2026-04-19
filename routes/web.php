@@ -1,8 +1,8 @@
 <?php
 
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\CampaignRouteController;
-use App\Http\Controllers\AuthController;
 use App\Http\Controllers\MapRouteController;
 use App\Http\Controllers\RouteAssignmentController;
 use App\Http\Controllers\RouteTrackingPointController;
@@ -24,7 +24,6 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/campaigns/{campaign}/map-routes', [MapRouteController::class, 'storeForCampaign'])->name('campaigns.map-routes.store');
 
     Route::get('/campaigns', [CampaignController::class, 'index'])->name('campaigns.index');
-
     Route::middleware('admin.user')->group(function (): void {
         Route::get('/campaigns/{campaign}/map/templates', [MapRouteController::class, 'showTemplates'])->name('campaigns.map.templates');
         Route::post('/campaigns/{campaign}/routes', [CampaignRouteController::class, 'store'])->name('campaigns.routes.store');
@@ -36,6 +35,10 @@ Route::middleware('auth')->group(function (): void {
         Route::post('/campaigns', [CampaignController::class, 'store'])->name('campaigns.store');
         Route::delete('/campaigns/{campaign}', [CampaignController::class, 'destroy'])->name('campaigns.destroy');
     });
+
+    Route::get('/campaigns/{campaign}', [CampaignController::class, 'show'])->name('campaigns.show');
+    Route::post('/campaigns/{campaign}/routes/{campaignRoute}/volunteer', [RouteAssignmentController::class, 'volunteer'])->name('campaigns.routes.volunteer');
+
 
     Route::get('/assignments/{assignment}', [RouteAssignmentController::class, 'show'])->name('assignments.show');
     Route::post('/assignments/{assignment}/start', [RouteAssignmentController::class, 'start'])->name('assignments.start');

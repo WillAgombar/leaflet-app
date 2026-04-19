@@ -329,14 +329,15 @@ if (trackerRoot) {
         }
     };
 
-    const addRouteLabel = (layer, name) => {
+    const addRouteLabel = (layer, name, stateOverride = null) => {
         const bounds = layer.getBounds();
 
         if (!bounds.isValid()) {
             return;
         }
 
-        const displayName = name.trim() || 'Volunteer';
+        const displayName = (name || '').trim() || 'Volunteer';
+        const state = stateOverride || routeLabelState;
 
         const labelIcon = L.divIcon({
             className: 'route-label',
@@ -345,7 +346,7 @@ if (trackerRoot) {
                 <div class="route-label-chip" title="${escapeHtml(displayName)}">
                     <span class="route-label-chip__dot"></span>
                     <span class="route-label-chip__meta">
-                        <span class="route-label-chip__state">${routeLabelState}</span>
+                        <span class="route-label-chip__state">${escapeHtml(state)}</span>
                         <span class="route-label-chip__name">${escapeHtml(displayName)}</span>
                     </span>
                 </div>
@@ -364,17 +365,8 @@ if (trackerRoot) {
             hash |= 0;
         }
 
-        const palette = [
-            '#d32f2f',
-            '#fbc02d',
-            '#388e3c',
-            '#1976d2',
-            '#7b1fa2',
-            '#f57c00',
-            '#00796b',
-        ];
-
-        return palette[Math.abs(hash) % palette.length];
+        const hue = Math.abs(hash) % 360;
+        return `hsl(${hue}, 80%, 40%)`;
     };
 
     const addCompletedRoute = (name, routeData, seed) => {
@@ -402,11 +394,13 @@ if (trackerRoot) {
         addRouteLabel(routeLayer, name);
     };
 
-    const statusStyle = (status) => {
+    const statusStyle = (status, seed) => {
+        const baseColor = colorFromSeed(seed);
+
         if (status === 'in_progress') {
             return {
-                color: '#1976d2',
-                opacity: 0.85,
+                color: baseColor,
+                opacity: 0.9,
                 weight: 6,
                 dashArray: '6 6',
             };
@@ -414,27 +408,36 @@ if (trackerRoot) {
 
         if (status === 'completed') {
             return {
-                color: '#455a64',
-                opacity: 0.7,
+                color: baseColor,
+                opacity: 0.95,
                 weight: 6,
             };
         }
 
+        if (status === 'available') {
+            return {
+                color: baseColor,
+                opacity: 0.6,
+                weight: 6,
+                dashArray: '2 8',
+            };
+        }
+
         return {
-            color: '#f9a825',
+            color: baseColor,
             opacity: 0.8,
             weight: 6,
-            dashArray: '4 8',
+            dashArray: '10 8',
         };
     };
 
-    const addAssignedRoute = (routeData, status) => {
+    const addAssignedRoute = (routeData, status, name, userName) => {
         if (!routeData || routeData.type !== 'FeatureCollection') {
             return;
         }
 
         const routeLayer = L.geoJSON(routeData, {
-            style: statusStyle(status),
+            style: statusStyle(status, name),
         });
 
         if (routeLayer.getLayers().length === 0) {
@@ -442,6 +445,21 @@ if (trackerRoot) {
         }
 
         routeLayer.addTo(assignedRoutesLayer);
+        
+        let labelState = '';
+        let displayName = '';
+        if (status === 'completed') {
+            labelState = 'Completed By';
+            displayName = userName || 'User';
+        } else if (status === 'assigned' || status === 'in_progress') {
+            labelState = 'Assigned To';
+            displayName = userName || 'User';
+        } else {
+            labelState = 'Looking for Volunteer';
+            displayName = name || 'Available';
+        }
+        
+        addRouteLabel(routeLayer, displayName, labelState);
     };
 
     const fitMapToSavedRoutes = () => {
@@ -715,7 +733,7 @@ if (trackerRoot) {
             return;
         }
 
-        addAssignedRoute(route.route, route.status);
+        addAssignedRoute(route.route, route.status, route.name, route.userName);
     });
 
     fitMapToSavedRoutes();

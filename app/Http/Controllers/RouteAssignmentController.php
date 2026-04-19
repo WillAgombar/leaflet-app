@@ -139,4 +139,28 @@ class RouteAssignmentController extends Controller
             'status' => $assignment->status,
         ]);
     }
+
+    public function volunteer(Request $request, Campaigns $campaign, CampaignRoute $campaignRoute): RedirectResponse
+    {
+        if ($campaignRoute->campaign_id !== $campaign->id) {
+            abort(404);
+        }
+
+        $assignment = RouteAssignment::query()
+            ->where('campaign_route_id', $campaignRoute->id)
+            ->first();
+
+        if ($assignment) {
+            return redirect()->back()->with('error', 'This route is already assigned.');
+        }
+
+        RouteAssignment::create([
+            'campaign_route_id' => $campaignRoute->id,
+            'user_id' => auth()->id(),
+            'status' => 'assigned',
+            'assigned_at' => now(),
+        ]);
+
+        return redirect()->back()->with('success', 'You have successfully volunteered for this route!');
+    }
 }

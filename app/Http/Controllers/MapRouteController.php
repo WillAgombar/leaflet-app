@@ -72,17 +72,20 @@ class MapRouteController extends Controller
 
         $assignedRoutes = CampaignRoute::query()
             ->where('campaign_id', $campaign->id)
-            ->whereHas('assignment', function ($query): void {
-                $query->whereIn('status', ['assigned', 'in_progress', 'completed']);
-            })
-            ->with('assignment')
+            ->with(['assignment.user'])
             ->get()
             ->map(function (CampaignRoute $campaignRoute): array {
+                $status = $campaignRoute->assignment?->status;
+                if (! $status) {
+                    $status = 'available';
+                }
+
                 return [
                     'id' => $campaignRoute->id,
                     'name' => $campaignRoute->name,
                     'route' => $campaignRoute->route_data,
-                    'status' => $campaignRoute->assignment?->status ?? 'assigned',
+                    'status' => $status,
+                    'userName' => $campaignRoute->assignment?->user?->name,
                 ];
             })
             ->values();
@@ -100,7 +103,7 @@ class MapRouteController extends Controller
 
     public function showTemplates(Campaigns $campaign): View
     {
-        if (!auth()->check() || auth()->user()?->is_admin !== true) {
+        if (! auth()->check() || auth()->user()?->is_admin !== true) {
             abort(403);
         }
 
