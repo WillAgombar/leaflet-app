@@ -31,6 +31,10 @@
             font-size: 10px;
         }
 
+        .leaflet-top.leaflet-right {
+            top: 80px;
+        }
+
         .route-label {
             background: transparent;
             border: 0;

@@ -1,3 +1,6 @@
+import '@geoman-io/leaflet-geoman-free';
+import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css';
+
 const trackerRoot = document.querySelector('[data-leaflet-tracker]');
 
 if (trackerRoot) {
@@ -37,7 +40,7 @@ if (trackerRoot) {
     const getSaveButtonLabel = (isSaving) => {
         if (isTemplateMode) {
             if (editingRoute) {
-                return isSaving ? 'Adding to Route...' : 'Add to Route';
+                return isSaving ? 'Updating Route...' : 'Update Route';
             }
 
             return isSaving ? 'Saving Template...' : 'Save Route Template';
@@ -72,6 +75,12 @@ if (trackerRoot) {
     const routeLabelsLayer = L.layerGroup().addTo(map);
     const inProgressRouteLayer = L.layerGroup().addTo(map);
     const inProgressVertexLayer = L.layerGroup().addTo(map);
+
+    if (isTemplateMode) {
+        map.pm.setGlobalOptions({
+            allowSelfIntersection: false,
+        });
+    }
 
     let usingDetailedLayer = false;
     let userLocationMarker = null;
@@ -390,6 +399,7 @@ if (trackerRoot) {
             return;
         }
 
+        routeLayer.routeId = seed;
         routeLayer.addTo(completedRoutesLayer);
         addRouteLabel(routeLayer, name);
     };
@@ -559,6 +569,13 @@ if (trackerRoot) {
         if (!routeId) {
             editingRoute = null;
             saveButtonLabel.textContent = getSaveButtonLabel(false);
+            if (isTemplateMode) {
+                completedRoutesLayer.eachLayer((layer) => {
+                    if (layer.pm) {
+                        layer.pm.disable();
+                    }
+                });
+            }
             return;
         }
 
@@ -567,7 +584,13 @@ if (trackerRoot) {
         if (!match) {
             editingRoute = null;
             saveButtonLabel.textContent = getSaveButtonLabel(false);
-
+            if (isTemplateMode) {
+                completedRoutesLayer.eachLayer((layer) => {
+                    if (layer.pm) {
+                        layer.pm.disable();
+                    }
+                });
+            }
             return;
         }
 
@@ -577,6 +600,29 @@ if (trackerRoot) {
         }
         saveButtonLabel.textContent = getSaveButtonLabel(false);
         setStatus(`Editing route: ${match.name}`);
+
+        if (isTemplateMode) {
+            completedRoutesLayer.eachLayer((layer) => {
+                if (!layer.pm) {
+                    return;
+                }
+                
+                if (String(layer.routeId) === String(routeId)) {
+                    layer.pm.enable({
+                        preventMarkerRemoval: false,
+                    });
+                    
+                    layer.off('pm:vertexclick').on('pm:vertexclick', (e) => {
+                        if (e.marker) {
+                            e.marker.fire('contextmenu');
+                        }
+                    });
+                } else {
+                    layer.pm.disable();
+                    layer.off('pm:vertexclick');
+                }
+            });
+        }
     };
 
     const osrmEndpoint = 'https://router.project-osrm.org/route/v1/driving';
@@ -862,6 +908,13 @@ if (trackerRoot) {
                 editingRoute = null;
                 saveButtonLabel.textContent = getSaveButtonLabel(false);
                 setStatus('Creating a new route.');
+                
+                completedRoutesLayer.eachLayer((layer) => {
+                    if (layer.pm) {
+                        layer.pm.disable();
+                    }
+                });
+                
                 resetDraftRoute();
 
                 return;
@@ -894,7 +947,7 @@ if (trackerRoot) {
             return;
         }
 
-        if (draftPoints.length < 2) {
+        if (!editingRoute && draftPoints.length < 2) {
             setStatus('Add at least two points before saving.', false);
 
             return;
@@ -924,10 +977,34 @@ if (trackerRoot) {
                     throw new Error('Route editing is unavailable right now.');
                 }
 
-                const existingFeatures = Array.isArray(editingRoute.route?.features) ? editingRoute.route.features : [];
+                let modifiedGeoJSON = editingRoute.route;
+                completedRoutesLayer.eachLayer((layer) => {
+                    if (String(layer.routeId) === String(editingRoute.id)) {
+                        const layerGeoJSON = layer.toGeoJSON();
+                        if (layerGeoJSON) {
+                            if (layerGeoJSON.type === 'Feature') {
+                                modifiedGeoJSON = {
+                                    type: 'FeatureCollection',
+                                    features: [layerGeoJSON]
+                                };
+                            } else {
+                                modifiedGeoJSON = layerGeoJSON;
+                            }
+                        }
+                    }
+                });
+
+                const existingFeatures = Array.isArray(modifiedGeoJSON?.features) ? modifiedGeoJSON.features : [];
+                const allFeatures = [...existingFeatures, ...newFeatures];
+                
+                const validFeatures = allFeatures.filter((feature) => {
+                    const coords = feature?.geometry?.coordinates;
+                    return Array.isArray(coords) && coords.length >= 2;
+                });
+
                 mergedRouteData = {
                     type: 'FeatureCollection',
-                    features: [...existingFeatures, ...newFeatures],
+                    features: validFeatures,
                 };
                 requestUrl = updateUrlBase.replace(/\/0$/, `/${editingRoute.id}`);
                 method = 'PATCH';
@@ -965,6 +1042,8 @@ if (trackerRoot) {
                     if (routeEditSelect) {
                         routeEditSelect.value = String(payload.route.id);
                     }
+                    
+                    setEditingRoute(payload.route.id);
                 }
             }
 
