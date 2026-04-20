@@ -84,3 +84,6 @@ Route::middleware('auth')->group(function (): void {
         ]);
     })->name('profile.show');
 });
+
+
+//hi
